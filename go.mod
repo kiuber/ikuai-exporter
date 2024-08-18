@@ -4,15 +4,15 @@ go 1.21.3
 
 require (
 	github.com/alexflint/go-arg v1.4.3
-	github.com/jakeslee/ikuai v0.0.0-20231211061255-b4d8be1f1556
+	github.com/go-resty/resty/v2 v2.10.0
 	github.com/prometheus/client_golang v1.13.0
+	github.com/robfig/cron/v3 v3.0.1
 )
 
 require (
 	github.com/alexflint/go-scalar v1.1.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/go-resty/resty/v2 v2.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect

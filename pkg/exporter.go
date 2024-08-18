@@ -2,8 +2,8 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/jakeslee/ikuai"
-	"github.com/jakeslee/ikuai/action"
+	"github.com/jakeslee/ikuai-exporter/ikuai"
+	"github.com/jakeslee/ikuai-exporter/ikuai/action"
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"strconv"
@@ -40,42 +40,47 @@ type IKuaiExporter struct {
 }
 
 func NewIKuaiExporter(kuai *ikuai.IKuai) *IKuaiExporter {
+	register, err := kuai.ShowRegister()
+	if err != nil {
+		return nil
+	}
+	constLabels := prometheus.Labels{"instance": register.Data.Register[0].Comment}
 	return &IKuaiExporter{
 		ikuai: kuai,
 		versionDesc: prometheus.NewDesc("ikuai_version", "IKuai version info",
-			[]string{"version", "arch", "verstring"}, nil),
+			[]string{"version", "arch", "verstring"}, constLabels),
 		cpuUsageRatioDesc: prometheus.NewDesc("ikuai_cpu_usage_ratio", "IKuai CPU usage ratio",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 		cpuTempDesc: prometheus.NewDesc("ikuai_cpu_temperature", "",
-			nil, nil),
+			nil, constLabels),
 		memSizeDesc: prometheus.NewDesc("ikuai_memory_size_bytes", "",
-			[]string{}, nil),
+			[]string{}, constLabels),
 		memUsageDesc: prometheus.NewDesc("ikuai_memory_usage_bytes", "",
-			[]string{}, nil),
+			[]string{}, constLabels),
 		memCachedDesc: prometheus.NewDesc("ikuai_memory_cached_bytes", "",
-			[]string{}, nil),
+			[]string{}, constLabels),
 		memBuffersDesc: prometheus.NewDesc("ikuai_memory_buffers_bytes", "",
-			[]string{}, nil),
+			[]string{}, constLabels),
 		lanDeviceDesc: prometheus.NewDesc("ikuai_device_info", "ikuai_device_info",
-			[]string{"id", "mac", "hostname", "ip_addr", "comment"}, nil),
+			[]string{"id", "mac", "hostname", "ip_addr", "comment"}, constLabels),
 		lanDeviceCountDesc: prometheus.NewDesc("ikuai_device_count", "",
-			[]string{}, nil),
+			[]string{}, constLabels),
 		ifaceInfoDesc: prometheus.NewDesc("ikuai_iface_info", "",
-			[]string{"id", "interface", "comment", "internet", "parent_interface", "ip_addr"}, nil),
+			[]string{"id", "interface", "comment", "internet", "parent_interface", "ip_addr"}, constLabels),
 		UpDesc: prometheus.NewDesc("ikuai_up", "",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 		UpTimeDesc: prometheus.NewDesc("ikuai_uptime", "",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 		streamUpBytesDesc: prometheus.NewDesc("ikuai_network_send_bytes", "",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 		streamDownBytesDesc: prometheus.NewDesc("ikuai_network_recv_bytes", "",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 		streamUpSpeedDesc: prometheus.NewDesc("ikuai_network_send_kbytes_per_second", "",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 		streamDownSpeedDesc: prometheus.NewDesc("ikuai_network_recv_kbytes_per_second", "",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 		connCountDesc: prometheus.NewDesc("ikuai_network_conn_count", "",
-			[]string{"id"}, nil),
+			[]string{"id"}, constLabels),
 	}
 }
 
