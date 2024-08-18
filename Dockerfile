@@ -1,15 +1,27 @@
+FROM golang:1.22.4-alpine AS builder
 
+RUN apk add --no-cache git
 
-FROM jakes/base-image:alpine-3.14.0-tz
-LABEL maintainers="Jakes Lee"
-LABEL description="iKuai exporter"
-ARG TARGETPLATFORM
+WORKDIR /tmp/go-app
 
-ADD ./output /output
-RUN cp /output/"$TARGETPLATFORM"/app /app
+COPY go.mod .
+COPY go.sum .
 
-EXPOSE 9090
-WORKDIR /data
+RUN go mod download
 
-RUN chmod +x /app
-CMD ["/app"]
+COPY ./ ./
+
+RUN CGO_ENABLED=0 go test -v
+
+RUN go build -o ./out/go-app .
+
+FROM alpine:3.9
+RUN apk add ca-certificates
+
+COPY --from=builder /tmp/go-app/out/go-app /app/go-app
+
+EXPOSE 8080
+
+WORKDIR /app
+
+CMD ["/app/go-app"]
