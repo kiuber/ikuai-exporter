@@ -20,8 +20,6 @@ RUN apk add ca-certificates
 
 COPY --from=builder /tmp/go-app/out/go-app /app/go-app
 
-EXPOSE 8080
-
 WORKDIR /app
 
 CMD ["/app/go-app"]
