@@ -23,14 +23,12 @@ class App(DevOpsApp):
             cmd = f'docker build {build_params}'
         self.shell_run(cmd)
 
-    def restart(self, ikuai_ip, username, password, pushgateway_url='', pushgateway_crontab='*/15 * * * * *', pushgateway_job='ikuai', debug=False):
+    def restart(self, ikuai_ip, username, password, metrics_port=12695, pushgateway_url='', pushgateway_crontab='*/15 * * * * *', pushgateway_job='ikuai', debug=False):
         container = f'{self.app_name}-{ikuai_ip}'
         self.stop_container(container, timeout=1)
         self.remove_container(container, force=True)
 
-        ports = [
-            '12695:9090'
-        ]
+        ports = [f'{metrics_port}:9090'] if metrics_port else []
 
         envs = [
             f'IK_URL=http://{ikuai_ip}',
