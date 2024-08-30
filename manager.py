@@ -23,7 +23,7 @@ class App(DevOpsApp):
             cmd = f'docker build {build_params}'
         self.shell_run(cmd)
 
-    def restart(self, ikuai_ip, username, password, metrics_port=12695, pushgateway_url='', pushgateway_crontab='*/15 * * * * *', pushgateway_job='ikuai', debug=False, container=None):
+    def restart(self, ikuai_ip, username, password, metrics_port=12695, pushgateway_url='', pushgateway_username='', pushgateway_password='', pushgateway_crontab='*/15 * * * * *', pushgateway_job='ikuai', debug=False, container=None):
         container = container if container else f'{self.app_name}-{ikuai_ip}'
         self.stop_container(container, timeout=1)
         self.remove_container(container, force=True)
@@ -39,6 +39,8 @@ class App(DevOpsApp):
         if pushgateway_url:
             envs.append(f'PG_URL={pushgateway_url}')
             envs.append(f'PG_JOB={pushgateway_job}')
+            envs.append(f'PG_USERNAME={pushgateway_username}')
+            envs.append(f'PG_PASSWORD={pushgateway_password}')
             if pushgateway_crontab:
                 envs.append(f'PG_CRONTAB="{pushgateway_crontab}"')
 

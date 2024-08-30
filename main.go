@@ -17,14 +17,16 @@ import (
 )
 
 type Config struct {
-	Ikuai              string `arg:"env:IK_URL" help:"iKuai URL" default:"http://10.0.1.253"`
-	IkuaiUsername      string `arg:"env:IK_USER" help:"iKuai username" default:"test"`
-	IkuaiPassword      string `arg:"env:IK_PWD" help:"iKuai password" default:"test123"`
-	Debug              bool   `arg:"env:DEBUG" help:"iKuai 开启 debug 日志" default:"false"`
-	InsecureSkip       bool   `arg:"env:SKIP_TLS_VERIFY" help:"是否跳过 iKuai 证书验证" default:"true"`
-	PushgatewayUrl     string `arg:"env:PG_URL" help:"push gateway url" default:""`
-	PushgatewayCrontab string `arg:"env:PG_CRONTAB" help:"push gateway crontab, default every minute" default:"*/15 * * * * *"`
-	PushgatewayJob     string `arg:"env:PG_JOB" help:"push gateway job" default:"ikuai"`
+	Ikuai               string `arg:"env:IK_URL" help:"iKuai URL" default:"http://10.0.1.253"`
+	IkuaiUsername       string `arg:"env:IK_USER" help:"iKuai username" default:"test"`
+	IkuaiPassword       string `arg:"env:IK_PWD" help:"iKuai password" default:"test123"`
+	Debug               bool   `arg:"env:DEBUG" help:"iKuai 开启 debug 日志" default:"false"`
+	InsecureSkip        bool   `arg:"env:SKIP_TLS_VERIFY" help:"是否跳过 iKuai 证书验证" default:"true"`
+	PushgatewayUrl      string `arg:"env:PG_URL" help:"pushgateway url" default:""`
+	PushgatewayCrontab  string `arg:"env:PG_CRONTAB" help:"pushgateway crontab, default every minute" default:"*/15 * * * * *"`
+	PushgatewayJob      string `arg:"env:PG_JOB" help:"pushgateway job" default:"ikuai"`
+	PushgatewayUsername string `arg:"env:PG_USERNAME" help:"pushgateway username" default:""`
+	PushgatewayPassword string `arg:"env:PG_PASSWORD" help:"pushgateway password" default:""`
 }
 
 var (
@@ -59,6 +61,7 @@ func main() {
 
 			pusher := push.New(config.PushgatewayUrl, config.PushgatewayJob).
 				Collector(exporter).Client(http.DefaultClient).
+				BasicAuth(config.PushgatewayUsername, config.PushgatewayPassword).
 				Format(expfmt.FmtProtoDelim)
 			if err := pusher.Push(); err != nil {
 				fmt.Println("could not push completion time to PushGateway: ", err)
