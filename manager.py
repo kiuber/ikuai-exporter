@@ -42,7 +42,7 @@ class App(DevOpsApp):
             if pushgateway_crontab:
                 envs.append(f'PG_CRONTAB="{pushgateway_crontab}"')
 
-        args = dockerutil.base_docker_args(container_name=container, ports=ports, envs=envs)
+        args = dockerutil.base_docker_args(container_name=container, ports=ports, envs=envs, auto_hostname=False)
 
         cmd_data = {'image': image, 'args': args}
         cmd = template.render_str('docker run -d --restart always {{ args }} {{ image }}', cmd_data)
