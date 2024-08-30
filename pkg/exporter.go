@@ -157,7 +157,7 @@ func (i *IKuaiExporter) Collect(metrics chan<- prometheus.Metric) {
 		devices := map[string]action.LanDeviceInfo{}
 
 		for _, device := range lanDevice.Data.Data {
-			deviceId := fmt.Sprintf("device/%v", device.IPAddr)
+			deviceId := fmt.Sprintf("%s/%s", device.Mac, device.Hostname)
 
 			if _, ok := devices[deviceId]; !ok {
 				devices[deviceId] = device
