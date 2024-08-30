@@ -44,7 +44,8 @@ func NewIKuaiExporter(kuai *ikuai.IKuai) *IKuaiExporter {
 	if err != nil {
 		return nil
 	}
-	constLabels := prometheus.Labels{"instance": register.Data.Register[0].Comment}
+	constLabels := prometheus.Labels{"gwid": register.Data.Gwid, "gw_comment": register.Data.Register[0].Comment}
+	log.Printf("constLabels, %v", constLabels)
 	return &IKuaiExporter{
 		ikuai: kuai,
 		versionDesc: prometheus.NewDesc("ikuai_version", "IKuai version info",
