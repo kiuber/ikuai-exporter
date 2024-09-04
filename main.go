@@ -1,19 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"github.com/alexflint/go-arg"
 	"github.com/jakeslee/ikuai-exporter/ikuai"
 	"github.com/jakeslee/ikuai-exporter/pkg"
+	mper "github.com/kiuber/metrics-pusher/mper"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/client_golang/prometheus/push"
-	"github.com/prometheus/common/expfmt"
-	"github.com/robfig/cron/v3"
 	"log"
 	"net/http"
-	"os"
-	"time"
 )
 
 type Config struct {
@@ -51,28 +46,14 @@ func main() {
 
 	http.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{Registry: registry}))
 
-	if config.PushgatewayUrl != "" {
-		c := cron.New(cron.WithSeconds(), cron.WithChain(cron.SkipIfStillRunning(cron.DefaultLogger)), cron.WithLogger(
-			cron.VerbosePrintfLogger(log.New(os.Stdout, "crontab: ", log.LstdFlags))), cron.WithLocation(time.UTC))
-
-		log.Printf("pushgateway crontab spec: %s", config.PushgatewayCrontab)
-		c.AddFunc(config.PushgatewayCrontab, func() {
-			log.Printf("push to %s, job: %s", config.PushgatewayUrl, config.PushgatewayJob)
-
-			pusher := push.New(config.PushgatewayUrl, config.PushgatewayJob).
-				Collector(exporter).Client(http.DefaultClient).
-				BasicAuth(config.PushgatewayUsername, config.PushgatewayPassword).
-				Format(expfmt.FmtProtoDelim)
-			if err := pusher.Push(); err != nil {
-				fmt.Println("could not push completion time to PushGateway: ", err)
-			} else {
-				log.Printf("push done")
-			}
-		})
-		c.Start()
-	}
+	mper.PullPushCrontab(mper.PullPushConfig{
+		MetricsUrl:          "http://localhost:9090/metrics",
+		PushgatewayUrl:      config.PushgatewayUrl,
+		PushgatewayUsername: config.PushgatewayUsername,
+		PushgatewayPassword: config.PushgatewayPassword,
+		PushgatewayCrontab:  config.PushgatewayCrontab,
+	})
 
 	log.Printf("exporter %v started at :9090", version)
-
 	log.Fatal(http.ListenAndServe(":9090", nil))
 }
