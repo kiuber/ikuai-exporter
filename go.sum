@@ -148,6 +148,10 @@ github.com/kiuber/metrics-pusher v0.0.0-20240901023506-a639ad7974e3 h1:5QBQGdQRi
 github.com/kiuber/metrics-pusher v0.0.0-20240901023506-a639ad7974e3/go.mod h1:woEGzL5DsDmAz8a+LlZl3LREOESKrDpDx2euBVWt1OQ=
 github.com/kiuber/metrics-pusher v0.0.0-20240901024349-04ce7a9c9873 h1:5WfWNuoKxLSTyw/BqwBzvAVUx+drb1iseGnghuK5qps=
 github.com/kiuber/metrics-pusher v0.0.0-20240901024349-04ce7a9c9873/go.mod h1:woEGzL5DsDmAz8a+LlZl3LREOESKrDpDx2euBVWt1OQ=
+github.com/kiuber/metrics-pusher v0.0.0-20250624105802-4bd6bb409adf h1:Dy+LzzEPSirB8Z1MJcKmTT8Y24NAV/XH52SkvlT4i1Q=
+github.com/kiuber/metrics-pusher v0.0.0-20250624105802-4bd6bb409adf/go.mod h1:woEGzL5DsDmAz8a+LlZl3LREOESKrDpDx2euBVWt1OQ=
+github.com/kiuber/metrics-pusher v0.0.0-20250710130713-a5a48cf8c4c5 h1:uBbY0dFcPQPvLepyCuMTk2J3F7q66s9qbLeeX8lP198=
+github.com/kiuber/metrics-pusher v0.0.0-20250710130713-a5a48cf8c4c5/go.mod h1:woEGzL5DsDmAz8a+LlZl3LREOESKrDpDx2euBVWt1OQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=

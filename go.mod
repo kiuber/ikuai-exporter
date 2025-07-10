@@ -5,7 +5,7 @@ go 1.21.3
 require (
 	github.com/alexflint/go-arg v1.5.1
 	github.com/go-resty/resty/v2 v2.10.0
-	github.com/kiuber/metrics-pusher v0.0.0-20240901024349-04ce7a9c9873
+	github.com/kiuber/metrics-pusher v0.0.0-20250710130713-a5a48cf8c4c5
 	github.com/prometheus/client_golang v1.13.0
 )
 
