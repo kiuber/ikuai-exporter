@@ -12,13 +12,15 @@ class App(DevOpsApp):
     def __init__(self):
         DevOpsApp.__init__(self, APP_NAME)
 
-    def build_image(self, buildx=True, push=False):
+    def build_image(self, buildx=True, load=True, push=False):
         build_params = f'-t {image} {self.root_dir}'
         if buildx:
             self.shell_run('docker buildx create --use --name multi-arch-builder', exit_on_error=False)
             cmd = f'docker buildx build --platform linux/amd64,linux/arm64 {build_params}'
             if push:
                 cmd += f' --push'
+            if load:
+                cmd += f' --load'
         else:
             cmd = f'docker build {build_params}'
         self.shell_run(cmd)

@@ -2,12 +2,14 @@ package pkg
 
 import (
 	"fmt"
+	"log"
+	"runtime/debug"
+	"strconv"
+	"time"
+
 	"github.com/jakeslee/ikuai-exporter/ikuai"
 	"github.com/jakeslee/ikuai-exporter/ikuai/action"
 	"github.com/prometheus/client_golang/prometheus"
-	"log"
-	"strconv"
-	"time"
 )
 
 type IKuaiExporter struct {
@@ -32,11 +34,12 @@ type IKuaiExporter struct {
 	UpTimeDesc         *prometheus.Desc // 在线时间，host/link
 
 	// 网络，device/host/iface
-	streamUpBytesDesc   *prometheus.Desc // 流量上行数据包
-	streamDownBytesDesc *prometheus.Desc // 流量上行数据包
-	streamUpSpeedDesc   *prometheus.Desc // 流量上行速度
-	streamDownSpeedDesc *prometheus.Desc // 流量上行速度
-	connCountDesc       *prometheus.Desc // 连接数指标
+	streamUpBytesDesc            *prometheus.Desc // 流量上行数据包
+	streamDownBytesDesc          *prometheus.Desc // 流量上行数据包
+	streamUpSpeedDesc            *prometheus.Desc // 流量上行速度
+	streamDownSpeedDesc          *prometheus.Desc // 流量上行速度
+	connCountDesc                *prometheus.Desc // 连接数指标
+	DHCPAddrPoolAvailableNumDesc *prometheus.Desc // DHCP地址池可用数量
 }
 
 func NewIKuaiExporter(kuai *ikuai.IKuai) *IKuaiExporter {
@@ -82,6 +85,8 @@ func NewIKuaiExporter(kuai *ikuai.IKuai) *IKuaiExporter {
 			[]string{"id"}, constLabels),
 		connCountDesc: prometheus.NewDesc("ikuai_network_conn_count", "",
 			[]string{"id"}, constLabels),
+		DHCPAddrPoolAvailableNumDesc: prometheus.NewDesc("ikuai_dhcp_addr_pool_available_num", "",
+			[]string{}, constLabels),
 	}
 }
 
@@ -108,6 +113,7 @@ func (i *IKuaiExporter) Describe(descs chan<- *prometheus.Desc) {
 func (i *IKuaiExporter) Collect(metrics chan<- prometheus.Metric) {
 	defer func() {
 		if err := recover(); err != nil {
+			log.Printf(string(debug.Stack()))
 			log.Printf("collect ikuai panic, %v", err)
 
 			metrics <- prometheus.MustNewConstMetric(i.UpDesc, prometheus.GaugeValue, 0,
@@ -117,9 +123,9 @@ func (i *IKuaiExporter) Collect(metrics chan<- prometheus.Metric) {
 
 	stat, err := i.ikuai.ShowSysStat()
 
-	if isFail(&stat.Result, err) {
-		log.Printf("ikuai ShowSysStat: %v, %+v", err, stat.Result)
-		panic(stat.Result)
+	if stat == nil || isFail(&stat.Result, err) {
+		log.Printf("ikuai ShowSysStat: %v, %+v", err, stat)
+		panic("get sys stat error")
 	}
 
 	sysStat := stat.Data.SysStat
@@ -149,9 +155,16 @@ func (i *IKuaiExporter) Collect(metrics chan<- prometheus.Metric) {
 
 	lanDevice, err := i.ikuai.ShowMonitorLan()
 
-	if isFail(&lanDevice.Result, err) {
-		log.Printf("ikuai ShowMonitorLan: %v, %+v", err, lanDevice.Result)
+	// 3.7.21 online_user.count sometime is 0
+	deviceCount := sysStat.OnlineUser.Count
+
+	if lanDevice == nil || isFail(&lanDevice.Result, err) {
+		log.Printf("ikuai ShowMonitorLan: %v, %+v", err, lanDevice)
 	} else {
+		if deviceCount == 0 {
+			deviceCount = len(lanDevice.Data.Data)
+		}
+
 		devices := map[string]action.LanDeviceInfo{}
 
 		for _, device := range lanDevice.Data.Data {
@@ -183,12 +196,12 @@ func (i *IKuaiExporter) Collect(metrics chan<- prometheus.Metric) {
 		}
 	}
 
-	metrics <- prometheus.MustNewConstMetric(i.lanDeviceCountDesc, prometheus.GaugeValue, float64(sysStat.OnlineUser.Count))
+	metrics <- prometheus.MustNewConstMetric(i.lanDeviceCountDesc, prometheus.GaugeValue, float64(deviceCount))
 
 	monitorInterface, err := i.ikuai.ShowMonitorInterface()
 
-	if isFail(&monitorInterface.Result, err) {
-		log.Printf("ikuai ShowMonitorInterface: %v, %+v", err, monitorInterface.Result)
+	if monitorInterface == nil || isFail(&monitorInterface.Result, err) {
+		log.Printf("ikuai ShowMonitorInterface: %v, %+v", err, monitorInterface)
 	} else {
 		i.interfaceMetrics(metrics, monitorInterface)
 	}
@@ -215,6 +228,8 @@ func (i *IKuaiExporter) Collect(metrics chan<- prometheus.Metric) {
 	// 无报错，up
 	metrics <- prometheus.MustNewConstMetric(i.UpDesc, prometheus.GaugeValue, 1,
 		"host")
+
+	metrics <- prometheus.MustNewConstMetric(i.DHCPAddrPoolAvailableNumDesc, prometheus.GaugeValue, float64(stat.Data.DHCPAddrPoolNum.AvailableNum))
 }
 
 func (i *IKuaiExporter) interfaceMetrics(metrics chan<- prometheus.Metric, monitorInterface *action.ShowMonitorInterfaceResult) {

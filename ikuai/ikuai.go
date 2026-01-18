@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty/v2"
-	"github.com/jakeslee/ikuai-exporter/ikuai/action"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/jakeslee/ikuai-exporter/ikuai/action"
 )
 
 type IKuai struct {
@@ -37,13 +39,14 @@ func NewIKuai(url string, username string, password string, insecureSkipVerify, 
 	}
 
 	if autoLogin {
-		client.SetRetryCount(2)
+		client.SetRetryCount(3)
+		client.SetRetryWaitTime(5 * time.Second)
 		client.AddRetryCondition(func(response *resty.Response, err error) bool {
 			body := response.Body()
 			var result action.Result
 			rErr := json.Unmarshal(body, &result)
 			if rErr != nil {
-				log.Printf("Unmarshal error: %v", rErr)
+				log.Printf("Unmarshal error: %v, username: %s, body: %s", rErr, username, body)
 				return false
 			}
 
