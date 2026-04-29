@@ -22,6 +22,7 @@ type IKuai struct {
 	Password string
 
 	session string
+	IsV4    bool
 }
 
 func NewIKuai(url string, username string, password string, insecureSkipVerify, autoLogin bool) *IKuai {
@@ -50,7 +51,18 @@ func NewIKuai(url string, username string, password string, insecureSkipVerify, 
 				return false
 			}
 
-			if result.Result == 10014 {
+			isTimeout := result.Result == 10014
+
+			if !isTimeout {
+				var v4 struct {
+					Code int `json:"code"`
+				}
+				if json.Unmarshal(body, &v4) == nil && v4.Code == 1008 {
+					isTimeout = true
+				}
+			}
+
+			if isTimeout {
 				log.Printf("session timeout: try to login")
 				_, err := i.Login()
 				if err != nil {
@@ -109,25 +121,88 @@ func (i *IKuai) Login() (string, error) {
 	return "", errors.New(fmt.Sprintf("login error: %s, no cookies", result.ErrMsg))
 }
 
-func (i *IKuai) Run(session string, action *action.Action, result interface{}) (string, error) {
+func normalizeResponse(body []byte) []byte {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return body
+	}
+
+	changed := false
+
+	if _, ok := raw["results"]; ok {
+		if _, ok := raw["Data"]; !ok {
+			raw["Data"] = raw["results"]
+			delete(raw, "results")
+			changed = true
+		}
+	}
+
+	if _, ok := raw["code"]; ok {
+		if _, ok := raw["Result"]; !ok {
+			raw["Result"] = raw["code"]
+			delete(raw, "code")
+			changed = true
+		}
+	}
+
+	if _, ok := raw["message"]; ok {
+		if _, ok := raw["ErrMsg"]; !ok {
+			raw["ErrMsg"] = raw["message"]
+			delete(raw, "message")
+			changed = true
+		}
+	}
+
+	if !changed {
+		return body
+	}
+
+	normalized, err := json.Marshal(raw)
+	if err != nil {
+		return body
+	}
+
+	return normalized
+}
+
+func (i *IKuai) Run(session string, act *action.Action, result interface{}) (string, error) {
 	url := i.Url + "/Action/call"
 
 	response, err := i.client.R().
 		SetHeader("Content-Type", "application/json").
 		SetCookie(&http.Cookie{Name: "sess_key", Value: session}).
-		SetBody(action).
-		SetResult(result).
+		SetBody(act).
 		Post(url)
 
 	if err != nil {
 		return "", err
 	}
 
-	if i.debug {
-		log.Printf("POST %s, request: %v, response: %s", url, action, response.String())
+	body := normalizeResponse(response.Body())
+
+	if err := json.Unmarshal(body, result); err != nil {
+		return "", err
 	}
 
-	return response.String(), nil
+	if i.debug {
+		log.Printf("POST %s, request: %v, response: %s", url, act, string(body))
+	}
+
+	return string(body), nil
+}
+
+func (i *IKuai) DetectVersion() error {
+	resp, err := i.ShowSysStat()
+	if err != nil {
+		return err
+	}
+
+	if resp != nil && action.IsV4(resp.Data.SysStat.Verinfo.Version) {
+		i.IsV4 = true
+		log.Printf("detected ikuai v4: %s", resp.Data.SysStat.Verinfo.Version)
+	}
+
+	return nil
 }
 
 func (i *IKuai) Debug() {

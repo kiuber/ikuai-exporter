@@ -14,6 +14,7 @@ import (
 
 type IKuaiExporter struct {
 	ikuai       *ikuai.IKuai
+	isV4        bool
 	versionDesc *prometheus.Desc // ikuai 版本
 
 	// CPU
@@ -43,16 +44,39 @@ type IKuaiExporter struct {
 }
 
 func NewIKuaiExporter(kuai *ikuai.IKuai) *IKuaiExporter {
+	stat, err := kuai.ShowSysStat()
+	if err != nil {
+		log.Printf("ShowSysStat error: %v", err)
+	}
+	if stat != nil {
+		ver := stat.Data.SysStat.Verinfo.Version
+		if action.IsV4(ver) {
+			kuai.IsV4 = true
+		}
+		log.Printf("ikuai version: %s, isV4: %v", ver, kuai.IsV4)
+	}
+
 	register, err := kuai.ShowRegister()
 	if err != nil {
-		return nil
+		log.Printf("ShowRegister error: %v", err)
 	}
-	constLabels := prometheus.Labels{"gwid": register.Data.Gwid, "gw_comment": register.Data.Register[0].Comment}
+
+	gwid := ""
+	gwComment := ""
+	if register != nil {
+		gwid = register.Data.Gwid
+		if len(register.Data.Register) > 0 {
+			gwComment = register.Data.Register[0].Comment
+		}
+	}
+	constLabels := prometheus.Labels{"gwid": gwid, "gw_comment": gwComment}
 	log.Printf("constLabels, %v", constLabels)
+
 	return &IKuaiExporter{
 		ikuai: kuai,
+		isV4:  kuai.IsV4,
 		versionDesc: prometheus.NewDesc("ikuai_version", "IKuai version info",
-			[]string{"version", "arch", "verstring"}, constLabels),
+			[]string{"version", "arch", "verstring", "major_version"}, constLabels),
 		cpuUsageRatioDesc: prometheus.NewDesc("ikuai_cpu_usage_ratio", "IKuai CPU usage ratio",
 			[]string{"id"}, constLabels),
 		cpuTempDesc: prometheus.NewDesc("ikuai_cpu_temperature", "",
@@ -130,10 +154,16 @@ func (i *IKuaiExporter) Collect(metrics chan<- prometheus.Metric) {
 
 	sysStat := stat.Data.SysStat
 
+	majorVersion := "3"
+	if i.isV4 {
+		majorVersion = "4"
+	}
+
 	metrics <- prometheus.MustNewConstMetric(i.versionDesc, prometheus.GaugeValue, 1,
 		sysStat.Verinfo.Version,
 		sysStat.Verinfo.Arch,
-		sysStat.Verinfo.Verstring)
+		sysStat.Verinfo.Verstring,
+		majorVersion)
 
 	if len(sysStat.Cputemp) > 0 {
 		metrics <- prometheus.MustNewConstMetric(i.cpuTempDesc, prometheus.GaugeValue, float64(sysStat.Cputemp[0]))

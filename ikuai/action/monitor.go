@@ -10,7 +10,7 @@ type LanDeviceInfo struct {
 	Uptime       string `json:"uptime"`
 	Hostname     string `json:"hostname"`
 	DtalkName    string `json:"dtalk_name"`
-	Signal       string `json:"signal"`
+	Signal       any    `json:"signal"`
 	AcGid        int    `json:"ac_gid"`
 	Frequencies  string `json:"frequencies"`
 	Bssid        string `json:"bssid"`
@@ -72,16 +72,19 @@ func NewShowRegisterAction() *Action {
 }
 
 type Verinfo struct {
-	Modelname    string `json:"modelname"`
-	Verstring    string `json:"verstring"`
-	Version      string `json:"version"`
-	BuildDate    int64  `json:"build_date"`
-	Arch         string `json:"arch"`
-	Sysbit       string `json:"sysbit"`
-	Verflags     string `json:"verflags"`
-	IsEnterprise int    `json:"is_enterprise"`
-	SupportI18N  int    `json:"support_i18n"`
-	SupportLcd   int    `json:"support_lcd"`
+	Modelname       string `json:"modelname"`
+	Verstring       string `json:"verstring"`
+	Version         string `json:"version"`
+	BuildDate       int64  `json:"build_date"`
+	Arch            string `json:"arch"`
+	Sysbit          string `json:"sysbit"`
+	Verflags        string `json:"verflags"`
+	IsEnterprise    int    `json:"is_enterprise"`
+	SupportI18N     int    `json:"support_i18n"`
+	SupportDingtalk int    `json:"support_dingtalk"`
+	SupportLcd      int    `json:"support_lcd"`
+	Bootguide       string `json:"bootguide"`
+	SN              string `json:"sn"`
 }
 
 type MemoryStat struct {
