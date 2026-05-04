@@ -307,14 +307,19 @@ func (i *IKuaiExporter) interfaceMetrics(metrics chan<- prometheus.Metric, monit
 		metrics <- prometheus.MustNewConstMetric(i.streamDownSpeedDesc, prometheus.GaugeValue, float64(iface.Download),
 			ifaceId)
 
-		ifaceConn, nErr := strconv.ParseInt(iface.ConnectNum, 10, 8)
-		if nErr != nil {
-			ifaceConn = 0
-		}
+		ifaceConn := parseIfaceConnectNum(iface.ConnectNum)
 
 		metrics <- prometheus.MustNewConstMetric(i.connCountDesc, prometheus.GaugeValue, float64(ifaceConn),
 			ifaceId)
 	}
+}
+
+func parseIfaceConnectNum(connectNum string) int64 {
+	ifaceConn, err := strconv.ParseInt(connectNum, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return ifaceConn
 }
 
 func isFail(result *action.Result, err error) bool {
